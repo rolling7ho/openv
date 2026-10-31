@@ -1,0 +1,8 @@
+# OpenV game internals: name rva [pool: B flag k1 k2]
+ped_pool 434a930 434a928 434a920 30 2
+object_pool 4476d80 4476d78 4476d70 30 3
+pickup_pool 4454d90 4454d88 4454d80 31 5
+handle_to_ptr 1494b0
+vehicle_pool 435f240
+ptr_to_handle 149200
+globals 3ed15a8

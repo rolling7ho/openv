@@ -37,6 +37,12 @@ with open(out, 'w') as f:
     for u in sorted(nat, key=lambda k: int(k, 16)):
         f.write(f"{int(u, 16):016X} {int(nat[u]['handler'], 16):x} {nat[u]['conf']}\n")
 
+print('  Finding game internals for globals and entity lists...', flush=True)
+g = subprocess.run([py, '-I', 'research/gamefns.py', dump, w('crossmap-final.json'),
+                    os.path.join(os.path.dirname(out), f'game-{build}.txt')], env=env, capture_output=True, text=True, cwd=ROOT)
+print(g.stdout.rstrip(), flush=True)
+if g.returncode: print('  (Some extras were not found. Mods still work; a few features that list nearby things may not.)')
+
 live = sum(1 for l in open(tsv) if l.strip())
 trusted = conf['anchor'] + conf['solid'] + conf['high']
 print(f'  mapped {len(nat)} of {live} natives ({trusted} with high confidence): {dict(conf)}')

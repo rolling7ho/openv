@@ -191,6 +191,7 @@ fi
 
 mkdir -p "$GAME_DIR/OpenV" "$OPENV/data"
 cp "$WORK/natives-$VERSION.txt" "$MAP" && cp "$WORK/natives-$VERSION.txt" "$OPENV/data/"
+if [[ -s "$WORK/game-$VERSION.txt" ]]; then cp "$WORK/game-$VERSION.txt" "$GAME_DIR/OpenV/" && cp "$WORK/game-$VERSION.txt" "$OPENV/data/"; fi
 if (( OPENV_BROKEN )); then
     finish 1 "Map built, but OpenV itself also needs an update." \
         "The map for version $VERSION is saved, but this update also changed something" \

@@ -198,6 +198,40 @@ static int load_crossmap(const char *path)
     return n;
 }
 
+/* Game internals behind the non-native exports, from OpenV\game-<build>.txt (research/gamefns.py).
+   RVAs; 0 means not found, and the export falls back to its safe default. */
+typedef struct { uint32_t a, b, flag; int k1, k2; } game_pool;   /* encrypted pool pointer */
+static struct {
+    uint32_t globals, handle_to_ptr, ptr_to_handle, vehicle_pool;
+    game_pool pools[3];                                            /* peds, objects, pickups */
+} g_game;
+
+static uint64_t rol64(uint64_t v, int n) { n &= 63; return n ? v << n | v >> (64 - n) : v; }
+
+static int load_game_file(const char *path)
+{
+    static const char *pools[] = { "ped_pool", "object_pool", "pickup_pool" };
+    FILE *f = fopen(path, "r");
+    if (!f) { ov_log("GAME: cannot open %s; globals and world lists stay unavailable", path); return -1; }
+    char line[256], name[64];
+    int n = 0;
+    while (fgets(line, sizeof(line), f)) {
+        unsigned a, b, flag;
+        int k1, k2;
+        if (line[0] == '#' || sscanf(line, "%63s %x", name, &a) != 2) continue;
+        n++;
+        if (!strcmp(name, "globals")) g_game.globals = a;
+        else if (!strcmp(name, "handle_to_ptr")) g_game.handle_to_ptr = a;
+        else if (!strcmp(name, "ptr_to_handle")) g_game.ptr_to_handle = a;
+        else if (!strcmp(name, "vehicle_pool")) g_game.vehicle_pool = a;
+        else for (int i = 0; i < 3; i++)
+            if (!strcmp(name, pools[i]) && sscanf(line, "%*s %x %x %x %d %d", &a, &b, &flag, &k1, &k2) == 5)
+                g_game.pools[i] = (game_pool){ a, b, flag, k1, k2 };
+    }
+    fclose(f);
+    return n;
+}
+
 /* fault isolation for native calls: a bad mapping logs and returns zeros instead of crashing */
 static void *g_native_jb[5];
 static volatile LONG g_in_native;
@@ -301,6 +335,26 @@ static HANDLE g_main_thread;
 static int g_online;
 static int g_launched, g_ready_ticks;
 
+static int world_get_all(int which, int *out, int max);
+uint8_t *getScriptHandleBaseAddress(int h);
+
+/* once, when scripts launch: log what the game-internal exports see, as a health check in openv.log */
+static void self_check(void)
+{
+    static int handles[4096];
+    static const char *names[] = { "vehicles", "peds", "objects", "pickups" };
+    char line[256];
+    int len = snprintf(line, sizeof(line), "CHECK: entities");
+    for (int i = 0; i < 4; i++) len += snprintf(line + len, sizeof(line) - len, " %s %d", names[i], world_get_all(i, handles, 4096));
+    ov_log("%s", line);
+    g_call_argc = 0;
+    int me = *(int32_t *)invoke(0xD80958FC74E988A6ULL);                     /* PLAYER_PED_ID */
+    int n = world_get_all(1, handles, 4096), listed = 0;
+    for (int i = 0; i < n; i++) listed |= handles[i] == me;
+    ov_log("CHECK: player ped %d, in ped list: %s, address %p, globals %s", me, listed ? "yes" : "NO",
+           getScriptHandleBaseAddress(me), g_game.globals ? "found" : "missing");
+}
+
 static void tick(void)
 {
     if (!g_main_fiber) {
@@ -339,7 +393,7 @@ static void tick(void)
         g_call_argc = 1; g_call_args[0] = (uint64_t)player;
         int playing = *(int32_t *)invoke(0x5E9564D8246B909AULL);              /* IS_PLAYER_PLAYING */
         g_ready_ticks = !loading && playing ? g_ready_ticks + 1 : 0;
-        if (g_ready_ticks >= 30) { g_launched = 1; ov_log("TICK: game loaded, launching %ld scripts", g_nscripts); }
+        if (g_ready_ticks >= 30) { g_launched = 1; ov_log("TICK: game loaded, launching %ld scripts", g_nscripts); self_check(); }
     }
 
     DWORD now = GetTickCount();
@@ -500,6 +554,26 @@ static void attach_keyboard(void)
     ov_log("INIT: keyboard hooked on window %p class '%s'", h, cls);
 }
 
+/* Launched through Vodka, the full-screen game window sometimes opens shifted by half the screen, mostly
+   off-screen, and the game then loads very slowly until it is moved. Put a screen-sized window back on its
+   monitor; a smaller (windowed) one is the player's to place. */
+static void fix_window(void)
+{
+    static int fixes;
+    HWND h = NULL;
+    EnumWindows(find_game_window, (LPARAM)&h);
+    RECT r;
+    MONITORINFO mi = { sizeof(mi) };
+    if (!h || fixes >= 20 || !GetWindowRect(h, &r) || !GetMonitorInfoW(MonitorFromWindow(h, MONITOR_DEFAULTTONEAREST), &mi))
+        return;
+    RECT m = mi.rcMonitor;
+    if (abs((r.right - r.left) - (m.right - m.left)) > 2 || abs((r.bottom - r.top) - (m.bottom - m.top)) > 2) return;
+    if (r.left == m.left && r.top == m.top) return;
+    fixes++;
+    ov_log("WINDOW: full-screen window at %ld,%ld, moving it to %ld,%ld", r.left, r.top, m.left, m.top);
+    SetWindowPos(h, NULL, m.left, m.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS);
+}
+
 /* ---------------------------------------------------------------- init */
 
 static struct { WORD major, minor, build, build_minor; } g_version;
@@ -528,6 +602,7 @@ static DWORD WINAPI init_thread(void *unused)
     /* the executable is decrypted at startup and natives register during init: wait for both */
     int ok = 0;
     for (int i = 0; i < 1200 && !ok; i++) {
+        fix_window();
         ok = resolve_patterns(1) && *G.threads && load_live_table(0) > 6000;
         if (!ok) Sleep(250);
     }
@@ -539,9 +614,12 @@ static DWORD WINAPI init_thread(void *unused)
     int cm = load_crossmap(path), live = load_live_table(1);
     ov_log("INIT: natives: %d from crossmap, %d in game table", cm, live);
     if (cm < 0) { ov_log("INIT: FAILED - no crossmap for game %u.%u; scripts will not run", g_version.build, g_version.build_minor); return 0; }
+    snprintf(path, sizeof(path), "%sOpenV\\game-%u.%u.txt", g_dir, g_version.build, g_version.build_minor);
+    ov_log("INIT: game internals: %d entries", load_game_file(path));
     AddVectoredExceptionHandler(1, native_veh);
 
     for (;; Sleep(250)) {                   /* watchdog: keep both hooks attached across loads */
+        fix_window();
         attach_keyboard();
         attach_hook();
         check_stall();
@@ -622,24 +700,89 @@ void keyboardHandlerUnregister(keyboard_handler h)
 /* Not implemented yet: log once and return safe values */
 #define TODO(name) do { static int once; if (!once++) ov_log("TODO: %s is not implemented yet", name); } while (0)
 
-/* placeholder until script globals are located: a scratch area so callers never dereference NULL */
+/* Script globals. Without game-<build>.txt, a scratch area so callers never dereference NULL. */
 static uint64_t g_fake_globals[0x10000];
 uint64_t *getGlobalPtr(int id);  /* exported as ?getGlobalPtr@@YAPEA_KH@Z via src/openv.def */
 uint64_t *getGlobalPtr(int id)
 {
-    TODO("getGlobalPtr (returning scratch memory)");
+    uint64_t **blocks = g_game.globals ? (uint64_t **)(g_base + g_game.globals) : NULL;
+    uint64_t *block = blocks ? blocks[((unsigned)id >> 18) & 0x3f] : NULL;
+    if (block) return &block[id & 0x3ffff];
+    TODO("getGlobalPtr for this game build (returning scratch memory)");
     return &g_fake_globals[(unsigned)id % 0x10000];
 }
+
+static uint8_t *decode_pool(const game_pool *p)
+{
+    if (!p->a || !(g_base[p->flag] & 1)) return NULL;
+    uint64_t x = rol64(*(uint64_t *)(g_base + p->a), p->k1);
+    uint64_t v = rol64(rol64(*(uint64_t *)(g_base + p->b) ^ x, 32), (int)(x & 31) + p->k2);
+    return (uint8_t *)~v;
+}
+
+enum { POOL_VEHICLES, POOL_PEDS, POOL_OBJECTS, POOL_PICKUPS };
+static int g_world_broken;
+
+/* Script handles for every entity in a pool, as ScriptHookV does: the game's own pointer-to-handle
+   conversion, run inside the script thread context. A fault disables these calls for the session. */
+static int world_get_all(int which, int *out, int max)
+{
+    static const char *names[] = { "vehicles", "peds", "objects", "pickups" };
+    if (!g_in_tick || g_world_broken || !g_game.ptr_to_handle || !out || max <= 0) return 0;
+    int (*to_handle)(void *) = (int (*)(void *))(g_base + g_game.ptr_to_handle);
+    volatile int count = 0;
+    if (__builtin_setjmp(g_native_jb) == 0) {
+        g_in_native = 1;
+        if (which == POOL_VEHICLES) {
+            uint8_t *pool = g_game.vehicle_pool ? **(uint8_t ***)(g_base + g_game.vehicle_pool) : NULL;
+            int size = pool ? *(int32_t *)(pool + 0x10) : 0;
+            uint32_t *used = pool ? *(uint32_t **)(pool + 0x38) : NULL;
+            for (int i = 0; i < size && count < max; i++) {
+                if (!(used[i >> 5] & (1u << (i & 31)))) continue;
+                void *v = *(void **)(*(uint8_t **)(pool + 8) + *(int64_t *)(pool + 0x20) * i);
+                if (v) out[count++] = to_handle(v);
+            }
+        } else {
+            uint8_t *pool = decode_pool(&g_game.pools[which - 1]);
+            int size = pool ? *(int32_t *)(pool + 0x18) : 0, item = pool ? *(int32_t *)(pool + 0x1c) : 0;
+            for (int i = 0; i < size && count < max; i++)
+                if (!((*(uint8_t **)(pool + 0x10))[i] & 0x80))
+                    out[count++] = to_handle(*(uint8_t **)(pool + 8) + (int64_t)item * i);
+        }
+        g_in_native = 0;
+    } else {
+        g_world_broken = 1;
+        ov_log("WORLD: reading the %s pool faulted; worldGetAll* disabled for this session", names[which]);
+    }
+    return count;
+}
+
 int worldGetAllVehicles(int *a, int n);  /* exported as ?worldGetAllVehicles@@YAHPEAHH@Z via src/openv.def */
-int worldGetAllVehicles(int *a, int n) { TODO("worldGetAllVehicles"); return 0; }
+int worldGetAllVehicles(int *a, int n) { return world_get_all(POOL_VEHICLES, a, n); }
 int worldGetAllPeds(int *a, int n);  /* exported as ?worldGetAllPeds@@YAHPEAHH@Z via src/openv.def */
-int worldGetAllPeds(int *a, int n) { TODO("worldGetAllPeds"); return 0; }
+int worldGetAllPeds(int *a, int n) { return world_get_all(POOL_PEDS, a, n); }
 int worldGetAllObjects(int *a, int n);  /* exported as ?worldGetAllObjects@@YAHPEAHH@Z via src/openv.def */
-int worldGetAllObjects(int *a, int n) { TODO("worldGetAllObjects"); return 0; }
+int worldGetAllObjects(int *a, int n) { return world_get_all(POOL_OBJECTS, a, n); }
 int worldGetAllPickups(int *a, int n);  /* exported as ?worldGetAllPickups@@YAHPEAHH@Z via src/openv.def */
-int worldGetAllPickups(int *a, int n) { TODO("worldGetAllPickups"); return 0; }
+int worldGetAllPickups(int *a, int n) { return world_get_all(POOL_PICKUPS, a, n); }
+
 uint8_t *getScriptHandleBaseAddress(int h);  /* exported as ?getScriptHandleBaseAddress@@YAPEAEH@Z via src/openv.def */
-uint8_t *getScriptHandleBaseAddress(int h) { TODO("getScriptHandleBaseAddress"); return NULL; }
+uint8_t *getScriptHandleBaseAddress(int h)
+{
+    if (!g_game.handle_to_ptr || g_world_broken) return NULL;
+    uint8_t *(*from_handle)(int) = (uint8_t *(*)(int))(g_base + g_game.handle_to_ptr);
+    uint8_t *volatile p = NULL;
+    if (GetCurrentThreadId() != g_main_thread_id) return NULL;
+    if (__builtin_setjmp(g_native_jb) == 0) {
+        g_in_native = 1;
+        p = from_handle(h);
+        g_in_native = 0;
+    } else {
+        g_world_broken = 1;
+        ov_log("WORLD: handle lookup faulted; disabled for this session");
+    }
+    return p;
+}
 int createTexture(const char *f);  /* exported as ?createTexture@@YAHPEBD@Z via src/openv.def */
 int createTexture(const char *f) { TODO("createTexture"); return -1; }
 void drawTexture(int id, int idx, int lvl, int t, float sx, float sy, float cx, float cy,
