@@ -203,14 +203,14 @@ static int load_crossmap(const char *path)
 typedef struct { uint32_t a, b, flag; int k1, k2; } game_pool;   /* encrypted pool pointer */
 static struct {
     uint32_t globals, handle_to_ptr, ptr_to_handle, vehicle_pool;
-    game_pool pools[3];                                            /* peds, objects, pickups */
+    game_pool pools[4];                                            /* peds, objects, pickups, script handles */
 } g_game;
 
 static uint64_t rol64(uint64_t v, int n) { n &= 63; return n ? v << n | v >> (64 - n) : v; }
 
 static int load_game_file(const char *path)
 {
-    static const char *pools[] = { "ped_pool", "object_pool", "pickup_pool" };
+    static const char *pools[] = { "ped_pool", "object_pool", "pickup_pool", "guid_pool" };
     FILE *f = fopen(path, "r");
     if (!f) { ov_log("GAME: cannot open %s; globals and world lists stay unavailable", path); return -1; }
     char line[256], name[64];
@@ -224,7 +224,7 @@ static int load_game_file(const char *path)
         else if (!strcmp(name, "handle_to_ptr")) g_game.handle_to_ptr = a;
         else if (!strcmp(name, "ptr_to_handle")) g_game.ptr_to_handle = a;
         else if (!strcmp(name, "vehicle_pool")) g_game.vehicle_pool = a;
-        else for (int i = 0; i < 3; i++)
+        else for (int i = 0; i < 4; i++)
             if (!strcmp(name, pools[i]) && sscanf(line, "%*s %x %x %x %d %d", &a, &b, &flag, &k1, &k2) == 5)
                 g_game.pools[i] = (game_pool){ a, b, flag, k1, k2 };
     }
@@ -242,7 +242,8 @@ static void native_fault_trampoline(void) { __builtin_longjmp(g_native_jb, 1); }
 static LONG CALLBACK native_veh(EXCEPTION_POINTERS *e)
 {
     if (!g_in_native || GetCurrentThreadId() != g_main_thread_id ||
-        e->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return EXCEPTION_CONTINUE_SEARCH;
+        (e->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION &&
+         e->ExceptionRecord->ExceptionCode != EXCEPTION_BREAKPOINT)) return EXCEPTION_CONTINUE_SEARCH;
     g_in_native = 0;
     e->ContextRecord->Rip = (DWORD64)native_fault_trampoline;
     e->ContextRecord->Rsp = (e->ContextRecord->Rsp & ~0xfULL) - 8;
@@ -721,6 +722,17 @@ static uint8_t *decode_pool(const game_pool *p)
 }
 
 enum { POOL_VEHICLES, POOL_PEDS, POOL_OBJECTS, POOL_PICKUPS };
+
+/* Every entity converted to a handle takes a slot in the game's script handle pool, and the game asserts
+   (int3) when that pool is full. Stop while 64 slots are left for the game's own scripts. */
+static int guid_room(uint8_t *guids)
+{
+    int size = *(int32_t *)(guids + 0x18), used = *(int32_t *)(guids + 0x28) & 0x3fffffff;
+    if (*(int32_t *)(guids + 0x20) != -1 && used < size - 64) return 1;
+    static int logged;
+    if (!logged++) ov_log("WORLD: script handle pool nearly full (%d of %d); entity lists are cut short", used, size);
+    return 0;
+}
 static int g_world_broken;
 
 /* Script handles for every entity in a pool, as ScriptHookV does: the game's own pointer-to-handle
@@ -730,6 +742,8 @@ static int world_get_all(int which, int *out, int max)
     static const char *names[] = { "vehicles", "peds", "objects", "pickups" };
     if (!g_in_tick || g_world_broken || !g_game.ptr_to_handle || !out || max <= 0) return 0;
     int (*to_handle)(void *) = (int (*)(void *))(g_base + g_game.ptr_to_handle);
+    uint8_t *guids = decode_pool(&g_game.pools[3]);
+    if (!guids) return 0;                  /* without the handle pool's fill level, converting could overflow it */
     volatile int count = 0;
     if (__builtin_setjmp(g_native_jb) == 0) {
         g_in_native = 1;
@@ -740,12 +754,12 @@ static int world_get_all(int which, int *out, int max)
             for (int i = 0; i < size && count < max; i++) {
                 if (!(used[i >> 5] & (1u << (i & 31)))) continue;
                 void *v = *(void **)(*(uint8_t **)(pool + 8) + *(int64_t *)(pool + 0x20) * i);
-                if (v) out[count++] = to_handle(v);
+                if (v && guid_room(guids)) out[count++] = to_handle(v);
             }
         } else {
             uint8_t *pool = decode_pool(&g_game.pools[which - 1]);
             int size = pool ? *(int32_t *)(pool + 0x18) : 0, item = pool ? *(int32_t *)(pool + 0x1c) : 0;
-            for (int i = 0; i < size && count < max; i++)
+            for (int i = 0; i < size && count < max && guid_room(guids); i++)
                 if (!((*(uint8_t **)(pool + 0x10))[i] & 0x80))
                     out[count++] = to_handle(*(uint8_t **)(pool + 8) + (int64_t)item * i);
         }

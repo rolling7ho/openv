@@ -99,6 +99,13 @@ for i, r in enumerate(rows[:-1]):      # `call conv` followed by storing eax int
         found['ptr_to_handle'] = f'{int(r[2], 16) - 0x140000000:x}'; break
 else: missing.append('ptr_to_handle')
 
+# --- script handle pool: the encrypted pool pointer-to-handle decodes; it asserts (int3) when full ---
+if 'ptr_to_handle' in found:
+    out = subprocess.run([sys.executable, '-I', os.path.join(HERE, 'deob.py'), sys.argv[1], found['ptr_to_handle'], '120', '--calls'],
+                         capture_output=True, text=True).stdout
+    put_pool('guid_pool', {int(a, 16) for a in re.findall(r'; \[(0x[0-9a-f]+)\]', out) if int(a, 16) in pool_of})
+else: missing.append('guid_pool')
+
 # --- globals: scrThread::Run passes the block array to the interpreter: lea rdx,[globals]; mov r8,rbx; mov r9,r14; call ---
 g = [s + m.start() + 7 + struct.unpack('<i', m.group(1))[0]
      for s, e in TEXT for m in re.finditer(rb'\x48\x8d\x15(.{4})(?:\x49\x89\xd8|\x4c\x8b\xc3)(?:\x4d\x89\xf1|\x4d\x8b\xce)\xe8', dump[s:e], re.S)]
