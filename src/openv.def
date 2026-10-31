@@ -1,0 +1,26 @@
+LIBRARY ScriptHookV.dll
+EXPORTS
+    "?scriptRegister@@YAXPEAUHINSTANCE__@@P6AXXZ@Z"=scriptRegister
+    "?scriptRegisterAdditionalThread@@YAXPEAUHINSTANCE__@@P6AXXZ@Z"=scriptRegisterAdditionalThread
+    "?scriptUnregister@@YAXPEAUHINSTANCE__@@@Z"=scriptUnregisterModule
+    "?scriptUnregister@@YAXP6AXXZ@Z"=scriptUnregisterFn
+    "?scriptWait@@YAXK@Z"=scriptWait
+    "?scriptsAreLaunchedUsingReloading@@YA_NXZ"=scriptsAreLaunchedUsingReloading
+    "?nativeInit@@YAX_K@Z"=nativeInit
+    "?nativePush64@@YAX_K@Z"=nativePush64
+    "?nativeCall@@YAPEA_KXZ"=nativeCall
+    "?nativeCanExecuteInThisContext@@YA_NXZ"=nativeCanExecuteInThisContext
+    "?keyboardHandlerRegister@@YAXP6AXKGEHHHH@Z@Z"=keyboardHandlerRegister
+    "?keyboardHandlerUnregister@@YAXP6AXKGEHHHH@Z@Z"=keyboardHandlerUnregister
+    "?getGlobalPtr@@YAPEA_KH@Z"=getGlobalPtr
+    "?worldGetAllVehicles@@YAHPEAHH@Z"=worldGetAllVehicles
+    "?worldGetAllPeds@@YAHPEAHH@Z"=worldGetAllPeds
+    "?worldGetAllObjects@@YAHPEAHH@Z"=worldGetAllObjects
+    "?worldGetAllPickups@@YAHPEAHH@Z"=worldGetAllPickups
+    "?getScriptHandleBaseAddress@@YAPEAEH@Z"=getScriptHandleBaseAddress
+    "?createTexture@@YAHPEBD@Z"=createTexture
+    "?drawTexture@@YAXHHHHMMMMMMMMMMMM@Z"=drawTexture
+    "?presentCallbackRegister@@YAXP6AXPEAX@Z@Z"=presentCallbackRegister
+    "?presentCallbackUnregister@@YAXP6AXPEAX@Z@Z"=presentCallbackUnregister
+    "?getGameVersion@@YA?AW4eGameVersion@@XZ"=getGameVersion
+    "?getGameVersionInfo@@YA?AUGameVersionInfo@@XZ"=getGameVersionInfo

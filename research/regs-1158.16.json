@@ -1,0 +1,122 @@
+[
+{
+"site": "0x922f40",
+"hash": "0x4EDE34FBADD967A6",
+"handler": "0x920ea0",
+"universal": "WAIT"
+},
+{
+"site": "0x922fd6",
+"hash": "0xC9D9444186B5A374",
+"handler": "0x9231f0",
+"universal": "TIMERB"
+},
+{
+"site": "0x922fef",
+"hash": "0xC1B1E9A034A63A62",
+"handler": "0x923220",
+"universal": "SETTIMERA"
+},
+{
+"site": "0x923008",
+"hash": "0x5AE11BC36633DE4E",
+"handler": "0x923250",
+"universal": "SETTIMERB"
+},
+{
+"site": "0x92301c",
+"hash": "0x5AE11BC36633DE4E",
+"handler": "0x923280",
+"universal": "SETTIMERB"
+},
+{
+"site": "0x923035",
+"hash": "0x0BADBFA3B172435F",
+"handler": "0x923290",
+"universal": "SIN"
+},
+{
+"site": "0x92304e",
+"hash": "0xD0FFB162F40A139C",
+"handler": "0x9232c0",
+"universal": "COS"
+},
+{
+"site": "0x923067",
+"hash": "0x71D93B57D07F9804",
+"handler": "0x9232f0",
+"universal": "SQRT"
+},
+{
+"site": "0x923080",
+"hash": "0xE3621CC40F31FE2E",
+"handler": "0x923330",
+"universal": "POW"
+},
+{
+"site": "0x923099",
+"hash": "0xE816E655DE37FE20",
+"handler": "0x923360",
+"universal": "LOG10"
+},
+{
+"site": "0x9230b2",
+"hash": "0x652D2EEEF1D3E62C",
+"handler": "0x923390",
+"universal": "VMAG"
+},
+{
+"site": "0x9230cb",
+"hash": "0xA8CEACB4F35AE058",
+"handler": "0x9233e0",
+"universal": "VMAG2"
+},
+{
+"site": "0x9230e4",
+"hash": "0x2A488C176D52CCA5",
+"handler": "0x923410",
+"universal": "VDIST"
+},
+{
+"site": "0x9230fd",
+"hash": "0xB7A628320EFF8E47",
+"handler": "0x923470",
+"universal": "VDIST2"
+},
+{
+"site": "0x923116",
+"hash": "0xEDD95A39E5544DE8",
+"handler": "0x9234b0",
+"universal": "SHIFT_LEFT"
+},
+{
+"site": "0x92312f",
+"hash": "0x97EF1E5BCE9DC075",
+"handler": "0x9234d0",
+"universal": "SHIFT_RIGHT"
+},
+{
+"site": "0x923148",
+"hash": "0xF34EE736CF047844",
+"handler": "0x9234f0",
+"universal": "FLOOR"
+},
+{
+"site": "0x923161",
+"hash": "0x11E019C8F43ACC8A",
+"handler": "0x923510",
+"universal": "CEIL"
+},
+{
+"site": "0x92317a",
+"hash": "0xF2DB717A73826179",
+"handler": "0x923530",
+"universal": "ROUND"
+},
+{
+"site": "0x923193",
+"hash": "0xBBDA792448DB5A89",
+"handler": "0x923550",
+"universal": "TO_FLOAT"
+}
+]

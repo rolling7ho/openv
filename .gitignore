@@ -1,0 +1,13 @@
+.venv/
+research/dumps/
+__pycache__/
+build/
+rebuild-map.log
+# third-party binaries and headers used only for local testing/reference
+research/testmods/
+research/shv-sdk/
+# scratch outputs of solver accuracy experiments
+research/crossmap-holdout*.json
+*.exe
+# the rebuild tool needs these prebuilt helpers
+!tools/dump/*.exe

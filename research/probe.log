@@ -1,0 +1,33 @@
+openv-probe: game base 0000000140000000
+GET_HASH_KEY                     PASS  got 0d7114c9 want 0d7114c9
+ABSF                             PASS  got 2.5
+ABSI                             PASS  got 7
+TAN                              PASS  tan(45deg) got 1
+ATAN2                            PASS  got 45
+GET_ANGLE_BETWEEN_2D_VECTORS     PASS  got 90
+GET_DISTANCE_BETWEEN_COORDS      PASS  got 5
+GET_LENGTH_OF_LITERAL_STRING     PASS  got 5
+IS_STRING_NULL_OR_EMPTY          PASS  ""->1 "x"->0
+IS_STRING_NULL                   PASS  NULL->1 "x"->0
+ARE_STRINGS_EQUAL                PASS  same->1 diff->0
+STRING_TO_INT                    PASS  ret 1 out 42
+GET_RANDOM_INT_IN_RANGE          PASS  50 draws in [10,19]
+IS_PC_VERSION                    PASS  got 1
+IS_DURANGO_VERSION               PASS  got 0
+IS_STEAM_VERSION                 PASS  got 1
+GET_GAME_TIMER                   PASS  3596553 -> 3596814 after 250ms
+GET_FRAME_COUNT                  PASS  409193 -> 409215 after 250ms
+GET_CLOCK_HOURS/MINUTES          PASS  10:12
+GET_CURRENT_LANGUAGE             PASS  got 1 (0 = english)
+NETWORK_IS_SESSION_STARTED       PASS  got 0 (single player)
+NETWORK_IS_GAME_IN_PROGRESS      PASS  got 0
+PLAYER_ID                        PASS  got 0
+PLAYER_PED_ID == GET_PLAYER_PED(PLAYER_ID) PASS  ped 2, via player 2
+DOES_ENTITY_EXIST(player ped)    PASS  got 1
+IS_PED_A_PLAYER(player ped)      PASS  got 1
+GET_ENTITY_HEALTH(player ped)    PASS  got 200
+GET_ENTITY_MODEL(player ped)     PASS  got 0d7114c9 (michael/franklin/trevor = 0d7114c9/9b22dbaf/9b810fa2)
+GET_PED_TYPE(player ped)         PASS  got 0 (0-2 = story protagonists)
+GET_ENTITY_COORDS(player ped)    PASS  (-813.6, 179.5, 72.2)
+GET_PLAYER_NAME                  PASS  non-empty string, length 10
+pass 31 fail 0 fault 0

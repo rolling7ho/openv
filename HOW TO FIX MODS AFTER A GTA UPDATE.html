@@ -1,0 +1,35 @@
+<div><h1>GTA V mods stopped working? (OpenV fix)</h1></div>
+<div><br></div>
+<div><b>When to use this:</b> GTA V updated and Menyoo (F8) doesn't open anymore. This teaches OpenV the new game version. You only need it after a game update.</div>
+<div><br></div>
+<div><h2>How to run it</h2></div>
+<ol>
+<li>Quit GTA V if it's open (save first if you're playing).</li>
+<li>Open Finder and go to <b>Desktop › vodka › OpenV</b>.</li>
+<li>Double-click <b>Rebuild OpenV Map</b>. A Terminal window opens. Press any key to start.</li>
+<li>If Vodka asks <i>"Launch Grand Theft Auto V Enhanced?"</i>, click <b>Launch</b>.</li>
+<li>If GTA shows a message about graphics drivers, click <b>OK</b>.</li>
+<li>Don't touch the game. It opens and closes by itself.</li>
+<li>Wait about 20 minutes. The Terminal window may look stuck during "Step 4". That's normal.</li>
+<li>When it's done, you'll see ✅ or ❌ with a short explanation. Press any key to close the window.</li>
+</ol>
+<div><br></div>
+<div><b>No Finder?</b> Paste this into the Terminal app and press Return:</div>
+<div><tt>~/Desktop/vodka/OpenV/Rebuild\ OpenV\ Map.command</tt></div>
+<div><br></div>
+<div><h2>What the result means</h2></div>
+<ul>
+<li><b>✅ Done! Mods should work again.</b> Start GTA from Vodka. In story mode, press F8 (twice the first time).</li>
+<li><b>✅ Already up to date.</b> The map was already made for this version, so the problem is something else. Usually Menyoo itself needs an update.</li>
+<li><b>❌ GTA V closed or crashed while loading.</b> GTA sometimes crashes on startup by itself. Just run it again.</li>
+<li><b>❌ Could not read the running game.</b> Quit GTA, quit and reopen Vodka, and run it again.</li>
+<li><b>❌ This update changed the game too much / wasn't reliable enough / OpenV itself also needs an update.</b> The automatic fix can't handle this update. GTA still works fine, just without mods. Wait for a newer OpenV or ScriptHookV.</li>
+</ul>
+<div><br></div>
+<div><h2>Good to know</h2></div>
+<ul>
+<li>It never breaks the game. If something goes wrong, it changes nothing and mods simply stay off.</li>
+<li>The first run may install a small analysis tool (needs internet). If macOS asks to install "command line developer tools", click Install, wait, then run it again.</li>
+<li>Details of every run are saved in <b>Desktop › vodka › OpenV › rebuild-map.log</b>.</li>
+<li>Single-player only. OpenV closes GTA if it ever detects GTA Online.</li>
+</ul>
