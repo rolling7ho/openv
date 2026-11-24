@@ -1,29 +1,44 @@
-GTA V mods stopped working? (OpenV fix)
+GTA V mods stopped working (OpenV fix)
 
-When to use this: GTA V updated and Menyoo (F8) doesn't open anymore. This teaches OpenV the new game version. You only need it after a game update.
+When to use this: GTA V has updated and Menyoo (F8) no longer opens. This procedure teaches
+OpenV the new game version. It is required only after a game update.
 
 How to run it
-	1	Quit GTA V if it's open (save first if you're playing).
-	2	Open Finder and go to Desktop â€º vodka â€º OpenV.
-	3	Double-click Rebuild OpenV Map. A Terminal window opens. Press any key to start.
-	4	If Vodka asks "Launch Grand Theft Auto V Enhanced?", click Launch.
-	5	If GTA shows a message about graphics drivers, click OK.
-	6	Don't touch the game. It opens and closes by itself.
-	7	Wait about 20 minutes. The Terminal window may look stuck during "Step 4". That's normal.
-	8	When it's done, you'll see âœ… or âŒ with a short explanation. Press any key to close the window.
 
-No Finder? Paste this into the Terminal app and press Return:
+1. Quit GTA V if it is running (save first if you are playing).
+2. Open Finder and navigate to Desktop > vodka > OpenV.
+3. Double-click "Rebuild OpenV Map". A Terminal window opens. Press any key to start.
+4. If Vodka asks "Launch Grand Theft Auto V Enhanced?", click Launch.
+5. If GTA displays a message about graphics drivers, click OK.
+6. Do not interact with the game. It opens and closes by itself.
+7. Wait approximately 20 minutes. The Terminal window may appear inactive during "Step 4";
+   this is expected.
+8. When the run finishes, the result is displayed with a short explanation. Press any key to
+   close the window.
+
+Without Finder, paste the following into the Terminal application and press Return:
+
 ~/Desktop/vodka/OpenV/Rebuild\ OpenV\ Map.command
 
-What the result means
-	•	âœ… Done! Mods should work again. Start GTA from Vodka. In story mode, press F8 (twice the first time).
-	•	âœ… Already up to date. The map was already made for this version, so the problem is something else. Usually Menyoo itself needs an update.
-	•	âŒ GTA V closed or crashed while loading. GTA sometimes crashes on startup by itself. Just run it again.
-	•	âŒ Could not read the running game. Quit GTA, quit and reopen Vodka, and run it again.
-	•	âŒ This update changed the game too much / wasn't reliable enough / OpenV itself also needs an update. The automatic fix can't handle this update. GTA still works fine, just without mods. Wait for a newer OpenV or ScriptHookV.
+Result meanings
 
-Good to know
-	•	It never breaks the game. If something goes wrong, it changes nothing and mods simply stay off.
-	•	The first run may install a small analysis tool (needs internet). If macOS asks to install "command line developer tools", click Install, wait, then run it again.
-	•	Details of every run are saved in Desktop â€º vodka â€º OpenV â€º rebuild-map.log.
-	•	Single-player only. OpenV closes GTA if it ever detects GTA Online.
+- DONE: Mods should work again. Start GTA from Vodka. In story mode, press F8 (twice on the
+  first attempt).
+- UP TO DATE: The map already matches this game version, so the cause is elsewhere. Usually
+  Menyoo itself requires an update.
+- FAILED, game closed or crashed while loading: GTA sometimes crashes during startup. Run
+  the procedure again.
+- FAILED, could not read the running game: Quit GTA, quit and reopen Vodka, then run the
+  procedure again.
+- FAILED, update too large or unreliable: The automatic fix cannot handle this update.
+  GTA still runs, without mods. Wait for a newer OpenV or ScriptHookV.
+
+Notes
+
+- The procedure does not damage the game. If a step fails, nothing is changed and mods
+  remain disabled.
+- The first run may install a small analysis tool, which requires an internet connection. If
+  macOS offers to install "command line developer tools", click Install, wait, then run the
+  procedure again.
+- Details of each run are written to Desktop > vodka > OpenV > rebuild-map.log.
+- Single-player only. OpenV closes GTA if it detects GTA Online.
