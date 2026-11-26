@@ -75,7 +75,7 @@ static uint8_t *scan(const char *name, const char *pattern, int quiet)
     uint8_t *hit = NULL;
     int hits = 0;
     for (size_t i = 0; i + n <= g_text_size; i++) {
-        if (g_text[i] != bytes[0]) continue;
+        if (mask[0] && g_text[i] != bytes[0]) continue;
         int j = 1;
         while (j < n && (!mask[j] || g_text[i + j] == bytes[j])) j++;
         if (j == n && !hits++) hit = g_text + i;
@@ -141,20 +141,26 @@ typedef void (*native_handler)(native_ctx *);
 
 #define NMAP_SIZE 32768         /* power of two, > 2 * natives */
 static struct { uint64_t hash; native_handler fn; uint8_t flags; } g_nmap[NMAP_SIZE];
+static uint32_t g_nmap_count;
 enum { NF_SOLID = 1, NF_WARNED = 2, NF_DISABLED = 4 };
 
 static int nmap_slot(uint64_t hash)
 {
     uint32_t i = (uint32_t)(hash ^ (hash >> 29)) & (NMAP_SIZE - 1);
-    while (g_nmap[i].hash && g_nmap[i].hash != hash) i = (i + 1) & (NMAP_SIZE - 1);
-    return i;
+    for (uint32_t probes = 0; probes < NMAP_SIZE; probes++) {
+        if (!g_nmap[i].hash || g_nmap[i].hash == hash) return (int)i;
+        i = (i + 1) & (NMAP_SIZE - 1);
+    }
+    return -1;
 }
 
 static void nmap_put(uint64_t hash, native_handler fn, uint8_t flags)
 {
+    if (!hash || g_nmap_count >= NMAP_SIZE - 1) return;
     int i = nmap_slot(hash);
-    if (g_nmap[i].hash) return;     /* first source wins: crossmap before live table */
+    if (i < 0 || g_nmap[i].hash) return;     /* first source wins: crossmap before live table */
     g_nmap[i].hash = hash; g_nmap[i].fn = fn; g_nmap[i].flags = flags;
+    g_nmap_count++;
 }
 
 /* live table: same node encryption the game's register function uses (docs/re/01-native-table.md) */
@@ -261,10 +267,16 @@ static uint64_t *invoke(uint64_t hash)
     memset(&ctx, 0, sizeof(ctx));
     memset(g_call_ret, 0, sizeof(g_call_ret));
     ctx.ret = g_call_ret; ctx.argc = g_call_argc; ctx.args = g_call_args;
+    if (!hash) return g_call_ret;
     int slot = nmap_slot(hash);
+    if (slot < 0) return g_call_ret;
     if (!g_nmap[slot].hash) {
         ov_log("NATIVE: %016llX is not mapped for this game build, returning 0", (unsigned long long)hash);
-        g_nmap[slot].hash = hash; g_nmap[slot].flags = NF_DISABLED;
+        if (g_nmap_count < NMAP_SIZE - 1) {
+            g_nmap[slot].hash = hash; g_nmap[slot].flags = NF_DISABLED;
+            g_nmap_count++;
+        }
+        return g_call_ret;
     }
     if (g_nmap[slot].flags & NF_DISABLED) return g_call_ret;
     if (!(g_nmap[slot].flags & (NF_SOLID | NF_WARNED))) {
@@ -346,7 +358,12 @@ static void self_check(void)
     static const char *names[] = { "vehicles", "peds", "objects", "pickups" };
     char line[256];
     int len = snprintf(line, sizeof(line), "CHECK: entities");
-    for (int i = 0; i < 4; i++) len += snprintf(line + len, sizeof(line) - len, " %s %d", names[i], world_get_all(i, handles, 4096));
+    if (len < 0) len = 0;
+    else if (len >= (int)sizeof(line)) len = (int)sizeof(line) - 1;
+    for (int i = 0; i < 4 && len < (int)sizeof(line) - 1; i++) {
+        int r = snprintf(line + len, sizeof(line) - (size_t)len, " %s %d", names[i], world_get_all(i, handles, 4096));
+        if (r > 0) len += r < (int)sizeof(line) - len ? r : (int)sizeof(line) - 1 - len;
+    }
     ov_log("%s", line);
     g_call_argc = 0;
     int me = *(int32_t *)invoke(0xD80958FC74E988A6ULL);                     /* PLAYER_PED_ID */
@@ -496,13 +513,16 @@ static void check_stall(void)
         describe(c.Rip, where, sizeof(where));
         int len = snprintf(line, sizeof(line), "STALL: script %p has not yielded for %lums, rip %s, stack:",
                            g_current ? (void *)g_current->main : NULL, GetTickCount() - start, where);
+        if (len < 0) len = 0;
+        else if (len >= (int)sizeof(line)) len = (int)sizeof(line) - 1;
         uint64_t *sp = (uint64_t *)c.Rsp;
-        for (int i = 0, found = 0; i < 512 && found < 12 && len < (int)sizeof(line) - 80; i++) {
+        for (int i = 0, found = 0; i < 512 && found < 12 && len < (int)sizeof(line) - 1; i++) {
             MEMORY_BASIC_INFORMATION mbi;
             uint64_t v = sp[i];
             if (v < 0x10000 || !VirtualQuery((void *)v, &mbi, sizeof(mbi)) || !(mbi.Protect & 0xf0) || mbi.Type != MEM_IMAGE) continue;
             describe(v, where, sizeof(where));
-            len += snprintf(line + len, sizeof(line) - len, " %s", where);
+            int r = snprintf(line + len, sizeof(line) - (size_t)len, " %s", where);
+            if (r > 0) len += r < (int)sizeof(line) - len ? r : (int)sizeof(line) - 1 - len;
             found++;
         }
         ov_log("%s", line);
@@ -658,14 +678,18 @@ void scriptRegisterAdditionalThread(HMODULE m, void (*fn)(void)) { add_script(m,
 void scriptUnregisterModule(HMODULE m);  /* exported as ?scriptUnregister@@YAXPEAUHINSTANCE__@@@Z via src/openv.def */
 void scriptUnregisterModule(HMODULE m)
 {
+    EnterCriticalSection(&g_scripts_lock);
     for (int i = 0; i < g_nscripts; i++) if (g_scripts[i].module == m) g_scripts[i].done = 1;
+    LeaveCriticalSection(&g_scripts_lock);
     ov_log("SCRIPT: unregistered module %p", m);
 }
 
 void scriptUnregisterFn(void (*fn)(void));  /* exported as ?scriptUnregister@@YAXP6AXXZ@Z via src/openv.def */
 void scriptUnregisterFn(void (*fn)(void))
 {
+    EnterCriticalSection(&g_scripts_lock);
     for (int i = 0; i < g_nscripts; i++) if (g_scripts[i].main == fn) g_scripts[i].done = 1;
+    LeaveCriticalSection(&g_scripts_lock);
 }
 
 void scriptWait(DWORD ms);  /* exported as ?scriptWait@@YAXK@Z via src/openv.def */
@@ -691,7 +715,14 @@ bool nativeCanExecuteInThisContext(void);  /* exported as ?nativeCanExecuteInThi
 bool nativeCanExecuteInThisContext(void) { return g_in_tick && g_current; }
 
 void keyboardHandlerRegister(keyboard_handler h);  /* exported as ?keyboardHandlerRegister@@YAXP6AXKGEHHHH@Z@Z via src/openv.def */
-void keyboardHandlerRegister(keyboard_handler h) { if (g_nkbd < 64) g_kbd[g_nkbd++] = h; }
+void keyboardHandlerRegister(keyboard_handler h)
+{
+    if (!h) return;
+    for (int i = 0; i < g_nkbd; i++) {
+        if (!g_kbd[i]) { g_kbd[i] = h; return; }
+    }
+    if (g_nkbd < 64) g_kbd[g_nkbd++] = h;
+}
 void keyboardHandlerUnregister(keyboard_handler h);  /* exported as ?keyboardHandlerUnregister@@YAXP6AXKGEHHHH@Z@Z via src/openv.def */
 void keyboardHandlerUnregister(keyboard_handler h)
 {
