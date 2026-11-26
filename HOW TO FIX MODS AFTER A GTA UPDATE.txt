@@ -6,7 +6,7 @@ OpenV the new game version. It is required only after a game update.
 How to run it
 
 1. Quit GTA V if it is running (save first if you are playing).
-2. Open Finder and navigate to Desktop > vodka > OpenV.
+2. Open Finder and navigate to Documents > Projects > vodka > apps > openv.
 3. Double-click "Rebuild OpenV Map". A Terminal window opens. Press any key to start.
 4. If Vodka asks "Launch Grand Theft Auto V Enhanced?", click Launch.
 5. If GTA displays a message about graphics drivers, click OK.
@@ -18,7 +18,7 @@ How to run it
 
 Without Finder, paste the following into the Terminal application and press Return:
 
-~/Desktop/vodka/OpenV/Rebuild\ OpenV\ Map.command
+~/Documents/Projects/vodka/apps/openv/Rebuild\ OpenV\ Map.command
 
 Result meanings
 
@@ -40,5 +40,5 @@ Notes
 - The first run may install a small analysis tool, which requires an internet connection. If
   macOS offers to install "command line developer tools", click Install, wait, then run the
   procedure again.
-- Details of each run are written to Desktop > vodka > OpenV > rebuild-map.log.
+- Details of each run are written to Documents > Projects > vodka > apps > openv > rebuild-map.log.
 - Single-player only. OpenV closes GTA if it detects GTA Online.

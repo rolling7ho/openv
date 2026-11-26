@@ -80,10 +80,32 @@ static uint32_t joaat(const char *s)
     return h;
 }
 
-static DWORD WINAPI run(void *unused)
+static void resolve_log_path(HINSTANCE mod, char *buf, size_t size)
 {
+    char path[MAX_PATH];
+    DWORD len = GetModuleFileNameA(mod, path, sizeof(path));
+    if (len > 0 && len < sizeof(path)) {
+        int stripped = 0;
+        for (DWORD i = len; i > 0 && stripped < 3; i--) {
+            if (path[i - 1] == '\\' || path[i - 1] == '/') {
+                path[i - 1] = '\0';
+                stripped++;
+            }
+        }
+        if (stripped == 3) {
+            snprintf(buf, size, "%s\\research\\probe.log", path);
+            return;
+        }
+    }
+    snprintf(buf, size, "probe.log");
+}
+
+static DWORD WINAPI run(void *param)
+{
+    char log_path[MAX_PATH];
     game = (uint8_t *)GetModuleHandleA("GTA5_Enhanced.exe");
-    out = fopen("Z:\\Users\\ivan\\Desktop\\vodka\\OpenV\\research\\probe.log", "w");
+    resolve_log_path((HINSTANCE)param, log_path, sizeof(log_path));
+    out = fopen(log_path, "w");
     if (!out || !game) return 1;
     AddVectoredExceptionHandler(1, veh);
     fprintf(out, "openv-probe: game base %p\n", game);
@@ -146,6 +168,6 @@ static DWORD WINAPI run(void *unused)
 
 BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, void *r)
 {
-    if (reason == DLL_PROCESS_ATTACH) CloseHandle(CreateThread(NULL, 0, run, NULL, 0, NULL));
+    if (reason == DLL_PROCESS_ATTACH) CloseHandle(CreateThread(NULL, 0, run, h, 0, NULL));
     return TRUE;
 }
