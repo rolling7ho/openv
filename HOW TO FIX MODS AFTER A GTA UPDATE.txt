@@ -6,9 +6,9 @@ OpenV the new game version. It is required only after a game update.
 How to run it
 
 1. Quit GTA V if it is running (save first if you are playing).
-2. Open Finder and navigate to Documents > Projects > vodka > apps > openv.
+2. Open Finder and navigate to Documents > Projects > gmac > apps > openv.
 3. Double-click "Rebuild OpenV Map". A Terminal window opens. Press any key to start.
-4. If Vodka asks "Launch Grand Theft Auto V Enhanced?", click Launch.
+4. If Gmac asks "Launch Grand Theft Auto V Enhanced?", click Launch.
 5. If GTA displays a message about graphics drivers, click OK.
 6. Do not interact with the game. It opens and closes by itself.
 7. Wait approximately 20 minutes. The Terminal window may appear inactive during "Step 4";
@@ -18,17 +18,17 @@ How to run it
 
 Without Finder, paste the following into the Terminal application and press Return:
 
-~/Documents/Projects/vodka/apps/openv/Rebuild\ OpenV\ Map.command
+~/Documents/Projects/gmac/apps/openv/Rebuild\ OpenV\ Map.command
 
 Result meanings
 
-- DONE: Mods should work again. Start GTA from Vodka. In story mode, press F8 (twice on the
+- DONE: Mods should work again. Start GTA from Gmac. In story mode, press F8 (twice on the
   first attempt).
 - UP TO DATE: The map already matches this game version, so the cause is elsewhere. Usually
   Menyoo itself requires an update.
 - FAILED, game closed or crashed while loading: GTA sometimes crashes during startup. Run
   the procedure again.
-- FAILED, could not read the running game: Quit GTA, quit and reopen Vodka, then run the
+- FAILED, could not read the running game: Quit GTA, quit and reopen Gmac, then run the
   procedure again.
 - FAILED, update too large or unreliable: The automatic fix cannot handle this update.
   GTA still runs, without mods. Wait for a newer OpenV or ScriptHookV.
@@ -40,5 +40,5 @@ Notes
 - The first run may install a small analysis tool, which requires an internet connection. If
   macOS offers to install "command line developer tools", click Install, wait, then run the
   procedure again.
-- Details of each run are written to Documents > Projects > vodka > apps > openv > rebuild-map.log.
+- Details of each run are written to Documents > Projects > gmac > apps > openv > rebuild-map.log.
 - Single-player only. OpenV closes GTA if it detects GTA Online.

@@ -25,7 +25,7 @@ breakage **inexpensive to repair**: signatures and native tables are data files,
    recompilation.
 4. **Single-player only.** Refuse to run in GTA Online or when BattlEye is active. This
    protects users from bans and the project from takedown requests.
-5. **Operate under Wine/Vodka and on Windows.**
+5. **Operate under Wine/Gmac and on Windows.**
 
 Non-goals: online features, anti-cheat bypass, redistribution of game assets or code, and a
 mod menu.
@@ -111,7 +111,7 @@ ScriptHookV.dll (this project)
 | 1 | Research on 1158.16: script-thread tick, active-thread TLS, native table, globals, pools and Arxan-safe hook points; notes in `docs/re/` | Every item has a signature and validation that `sigcheck` reports as unique |
 | 2 | Natives, scheduler and scriptWait | NativeTrainer.asi (SDK sample) runs: the menu opens and vehicle spawning works |
 | 3 | Keyboard, globals, world pools, script handle to address, version information | Menyoo fully functional (spawner, vehicle spawn, teleport) |
-| 4 | Present callback and createTexture/drawTexture (Direct3D 12 overlay) | Plugins that draw textures render correctly, including on D3DMetal under Vodka |
+| 4 | Present callback and createTexture/drawTexture (Direct3D 12 overlay) | Plugins that draw textures render correctly, including on D3DMetal under Gmac |
 | 5 | Guard (online/BattlEye), reload support (`scriptsAreLaunchedUsingReloading`) and crash-safe unload | Entering Online closes the game cleanly; reloading ASIs works |
 | 6 | ScriptHookVDotNet (Enhanced fork) compatibility | SHVDN scripts load. SHVDN has its own memory patterns that can break independently |
 | 7 | Patch-day drill: update for 1158.17 and later using only the tools | A new build is supported in hours, with a documented runbook |
@@ -142,7 +142,7 @@ ScriptHookV.dll (this project)
 2. MIT license.
 3. Drop-in `ScriptHookV.dll` only. Stability has priority: per-script crash isolation,
    fail-closed boot and no hangs.
-4. Integration into Vodka as a per-game "Mods" toggle, after the hook works standalone.
+4. Integration into Gmac as a per-game "Mods" toggle, after the hook works standalone.
 5. Implementation has begun. The source in `src/`, the per-build data in `data/` and the
    research notes in `docs/re/` document the current state; the plan itself is still under
    review.

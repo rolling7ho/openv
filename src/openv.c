@@ -575,7 +575,7 @@ static void attach_keyboard(void)
     ov_log("INIT: keyboard hooked on window %p class '%s'", h, cls);
 }
 
-/* Launched through Vodka, the full-screen game window sometimes opens shifted by half the screen, mostly
+/* Launched through Gmac, the full-screen game window sometimes opens shifted by half the screen, mostly
    off-screen, and the game then loads very slowly until it is moved. Put a screen-sized window back on its
    monitor; a smaller (windowed) one is the player's to place. */
 static void fix_window(void)

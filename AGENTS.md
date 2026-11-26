@@ -15,7 +15,7 @@ Operating manual for contributors and coding agents working in `rolling7ho/openv
 - `data/`: shipped per-build native and game-internals maps.
 - `tools/`: dump and probe helpers (`tools/dump/*.exe` are committed for `Rebuild OpenV Map.command`).
 - `research/`: Python scripts using `.venv` (untracked; Python 3.9+ with `capstone`).
-- `Rebuild OpenV Map.command` requires GTA V Enhanced installed in a Vodka bottle and is an
+- `Rebuild OpenV Map.command` requires GTA V Enhanced installed in a Gmac bottle and is an
   interactive, slow procedure rather than an automated CI check.
 
 ## Writing and communication
