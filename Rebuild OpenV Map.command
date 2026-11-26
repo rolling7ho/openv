@@ -5,8 +5,8 @@
 
 OPENV=${0:A:h}
 LOG="$OPENV/rebuild-map.log"
-VODKA="$HOME/Library/Containers/com.rolling7ho.Vodka/Bottles"
-WINEBIN="$HOME/Library/Application Support/com.rolling7ho.Vodka/Libraries/Wine/bin"
+GMAC="$HOME/Library/Containers/com.rolling7ho.Gmac/Bottles"
+WINEBIN="$HOME/Library/Application Support/com.rolling7ho.Gmac/Libraries/Wine/bin"
 GAME_EXE="GTA5_Enhanced.exe"
 STEAM_APP=3240220
 WORK=$(mktemp -d /tmp/openv-rebuild.XXXXXX)
@@ -51,12 +51,12 @@ print; print
 
 # ---------------------------------------------------------------- 1. setup
 say "Step 1 of 4: Checking your setup"
-GAME_DIR=$(print -l "$VODKA"/*/drive_c/"Program Files (x86)"/Steam/steamapps/common/"Grand Theft Auto V Enhanced"(N/) | head -1)
+GAME_DIR=$(print -l "$GMAC"/*/drive_c/"Program Files (x86)"/Steam/steamapps/common/"Grand Theft Auto V Enhanced"(N/) | head -1)
 [[ -n "$GAME_DIR" ]] || finish 1 "GTA V Enhanced was not found." \
-    "This looks for GTA V Enhanced inside a Vodka bottle with Steam." \
-    "Make sure the game is installed in Vodka, then try again."
+    "This looks for GTA V Enhanced inside a Gmac bottle with Steam." \
+    "Make sure the game is installed in Gmac, then try again."
 BOTTLE=${GAME_DIR%%/drive_c/*}
-[[ -x "$WINEBIN/wine" ]] || finish 1 "Vodka's Wine was not found." "Open Vodka once so it can finish setting up, then try again."
+[[ -x "$WINEBIN/wine" ]] || finish 1 "Gmac's Wine was not found." "Open Gmac once so it can finish setting up, then try again."
 
 if [[ ! -x "$OPENV/.venv/bin/python" ]] || ! "$OPENV/.venv/bin/python" -I -c "import capstone" 2>>"$LOG"; then
     say "  Installing the analysis tools (one time only, needs internet)..."
@@ -87,14 +87,14 @@ print
 # ---------------------------------------------------------------- 2. open the game
 say "Step 2 of 4: Opening GTA V"
 if [[ -z "$(game_pid)" ]]; then
-    say "  Starting the game through Vodka. If Vodka asks whether to launch it,"
+    say "  Starting the game through Gmac. If Gmac asks whether to launch it,"
     say "  click Launch. If GTA shows a message about graphics drivers, click OK."
-    open "vodka://launch?steam=$STEAM_APP"; STARTED_GAME=1
+    open "gmac://launch?steam=$STEAM_APP"; STARTED_GAME=1
     for i in {1..150}; do [[ -n "$(game_pid)" ]] && break; sleep 2; done
 fi
 PID=$(game_pid)
 [[ -n "$PID" ]] || finish 1 "GTA V did not start." \
-    "Try starting GTA V from Vodka yourself. Once you see the main menu, run this again" \
+    "Try starting GTA V from Gmac yourself. Once you see the main menu, run this again" \
     "(it will use the game that is already open)."
 say "  The game is running. Waiting for it to finish loading (a few minutes)..."
 
@@ -163,7 +163,7 @@ for attempt in 1 2 3 4 5; do
     sleep 30
 done
 [[ -s image.bin ]] || finish 1 "Could not read the running game." \
-    "Close GTA V, quit and reopen Vodka, then run this again."
+    "Close GTA V, quit and reopen Gmac, then run this again."
 OPENV_BROKEN=0
 grep -q "game internals not found" "$GAME_DIR/openv.log" 2>/dev/null && OPENV_BROKEN=1
 
@@ -200,5 +200,5 @@ if (( OPENV_BROKEN )); then
 fi
 finish 0 "Done! Mods should work again." \
     "OpenV now knows game version $VERSION." \
-    "Start GTA V from Vodka like normal. In story mode, press F8 (twice the first time)" \
+    "Start GTA V from Gmac like normal. In story mode, press F8 (twice the first time)" \
     "to open Menyoo."

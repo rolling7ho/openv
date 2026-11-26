@@ -28,13 +28,13 @@ contains no anti-cheat bypass, and redistributes no game assets or proprietary c
 MSVC ABI (`clang-cl`, `lld-link`, and the Windows SDK, or MSVC on Windows).
 
 After a GTA V Enhanced update, `Rebuild OpenV Map.command` launches the game inside a
-[Vodka](https://github.com/rolling7ho/Vodka) bottle, dumps the updated image and live native
+[Gmac](https://github.com/rolling7ho/gmac) bottle, dumps the updated image and live native
 table, and regenerates the data file.
 
 ## Related repositories
 
-- [rolling7ho/Vodka](https://github.com/rolling7ho/Vodka): native macOS application for
-  running Steam and Windows games on Apple Silicon.
+- [rolling7ho/gmac](https://github.com/rolling7ho/gmac): native macOS application for
+  running Windows games on Apple Silicon.
 
 ## License
 
